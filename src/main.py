@@ -9,11 +9,11 @@ def main():
 
     df = load_data(path)
     print("Raw Data:")
-    print(df.head(), "\n")
+    print(df, "\n")
 
     df_cleaned = clean_data(df)
     print("Cleaned Data:")
-    print(df_cleaned.head())
+    print(df_cleaned)
 
 
 if __name__ == "__main__":

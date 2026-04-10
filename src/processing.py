@@ -1,4 +1,6 @@
 import pandas as pd
+import unicodedata
+from thefuzz import process
 
 
 def load_data(file_path: str) -> pd.DataFrame:
@@ -9,7 +11,7 @@ def load_data(file_path: str) -> pd.DataFrame:
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
-    # name standard
+    # column name standard
     df.columns = (
         df.columns
         .str.strip()
@@ -27,17 +29,123 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df["date"] = df["date"].apply(_fmt_date)
 
     # remove invalid lines
-    df = df.dropna(subset=["date", "product", "quantity", "unit_price", "city"])
+    df = df.dropna(subset=["date", "product", "quantity", "unit_price", "cost_per_unit", "city"])
 
-    # padronizing texts
-    df["product"] = df["product"].str.strip().str.lower()
-    df["city"] = df["city"].str.strip().str.lower()
-    # Capitalizing text
-    df["product"] = df["product"].str.title()
-    df["city"] = df["city"].str.title()
-    df["category"] = df["category"].str.title()
+  
+    #fuzz matching - chooses the most similar string from the list:
+    cities_list = ["Brasília", "Goiânia", "São Paulo", "Salvador"]
+    categories_list = ["Beer", "Soda", "Water", "Juice", "Energy Drink"]
+    products_list = ["Guaraná", "IPA", "Amstel","Indaiá", "Original","Cajuína", "Orange Juice", "Redbull", "Monster"]
 
-    # converting data types
-    df["quantity"] = df["quantity"].astype(int)
-    df["unit_price"] = df["unit_price"].astype(float)
+
+    threshold = 60 #threshold for not matching random strings
+
+    def clean_category(category):
+        if pd.isna(category):
+            return None
+        match, score = process.extractOne(category, categories_list)
+        return match if score >= threshold else None
+    def clean_product(product):
+        if pd.isna(product):
+            return None
+        match, score = process.extractOne(product, products_list)
+        return match if score >= threshold else None
+    
+    def clean_city(city):
+        if pd.isna(city):
+            return None
+        match, score = process.extractOne(city, cities_list)
+        return match if score >= threshold else None
+
+    df["city_clean"] = df["city"].apply(clean_city)
+    df["category_clean"] = df["category"].apply(clean_category)
+    df["product_clean"] = df["product"].apply(clean_product)
+
+    #----------- replace original columns with cleaned ones
+    df["city"] = df["city_clean"]
+    df["category"] = df["category_clean"]
+    df["product"] = df["product_clean"]
+
+    df = df.drop(columns=["city_clean", "category_clean", "product_clean"])
+
+    #new columns for better insights
+    df["revenue"] = df["quantity"] * df["unit_price"]
+    df["month"] = df["date"].dt.to_period("M")
+
+
+    top_revenues = (
+    df.groupby("product")["revenue"]
+    .sum()
+    .sort_values(ascending=False)
+    )
+    sales_by_city = (
+    df.groupby("city")["revenue"]
+    .sum()
+    .sort_values(ascending=False)
+    )
+    sales_by_month = (
+    df.groupby("month")["revenue"]
+    .sum()
+    .sort_values()
+    )
+    sales_by_category = (
+    df.groupby("category")["revenue"]
+    .sum()
+    .sort_values(ascending=False)
+    )
+
+    #top sales
+    top_revenue = top_revenues.idxmax()
+    top_revenue_share = top_revenues.max() / top_revenues.sum()
+
+    #new metrics: profit and margin
+    df["profit"] = (df["unit_price"] - df["cost_per_unit"]) * df["quantity"]
+    df["margin"] = (df["unit_price"] - df["cost_per_unit"]) / df["unit_price"]
+    top_profit_product = df.groupby("product")["profit"].sum().idxmax()
+    best_margin = df.groupby("product")["margin"].mean().idxmax()
+
+    #top sales city
+    top_city = sales_by_city.idxmax()
+
+    #top sales category
+    top_category = sales_by_category.idxmax()
+
+    growth = sales_by_month.pct_change().mean()
+
+    top_city_share = sales_by_city.max() / sales_by_city.sum()
+
+
+    total_revenue = df["revenue"].sum()
+    total_profit = df["profit"].sum()
+
+    #volume insights
+    top_volume_product = df.groupby("product")["quantity"].sum().idxmax()
+    top_volume = df.groupby("product")["quantity"].sum().max()
+
+    least_profitable = df.groupby("product")["profit"].sum().idxmin()
+
+    print(f"Total revenue is {total_revenue:.2f}, generating a total profit of {total_profit:.2f}.")
+
+    print(f"{top_revenue} generates the highest revenue, accounting for {top_revenue_share:.1%} of total sales.")
+
+    if top_revenue != top_profit_product:
+        print(f"However, {top_profit_product} is the most profitable product, indicating a gap between revenue and profitability.")
+    else:
+        print(f"{top_revenue} is also the most profitable product.")
+
+    print(f"{top_volume_product} is the most sold product with {top_volume} units.")
+
+    if top_volume_product != top_profit_product:
+        print(f"Despite high sales volume, {top_volume_product} is not the most profitable product, which is {top_profit_product}")
+
+    print(f"{top_city} leads revenue generation, contributing {top_city_share:.1%} of total sales.")
+    print(f"{top_category} is the main category revenue driver.")
+
+    print(f"{least_profitable} is the least profitable product, and requires attention.")
+
+    if growth > 0:
+        print("Sales show an upward trend over time.")
+    else:
+        print("Sales are declining or unstable over time.")
+
     return df
