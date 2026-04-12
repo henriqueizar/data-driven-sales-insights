@@ -31,23 +31,22 @@ def analyze_sales(df):
     # insight texts to print
     insights = []
 
-    insights.append(f"Total revenue is {total_revenue:.2f}, generating a total profit of {total_profit:.2f}.")
-    insights.append(f"{top_revenue_product} generates the highest revenue, accounting for {top_revenue_share:.1%} of total sales.")
+    insights.append(f"Total revenue is **R${total_revenue:.2f}**, generating a total profit of **R${total_profit:.2f}**.")
+    insights.append(f"**{top_revenue_product}** generates the highest revenue, accounting for **{top_revenue_share:.1%}** of total sales.")
 
     if top_revenue_product != top_profit_product:
-        insights.append(f"However, {top_profit_product} is the most profitable product, indicating a gap between revenue and profitability.")
+        insights.append(f"However, **{top_profit_product}** is the **most profitable** product, indicating a gap between revenue and profitability.")
     else:
-        insights.append(f"{top_revenue_product} is also the most profitable product.")
+        insights.append(f"**{top_revenue_product}** is also the most profitable product.")
 
-    insights.append(f"{top_volume_product} is the most sold product with {top_volume} units.")
+    insights.append(f"**{top_volume_product}** is the most sold product with **{top_volume}** units.")
 
     if top_volume_product != top_profit_product:
-        insights.append(f"Despite high sales volume, {top_volume_product} is not the most profitable product, which is {top_profit_product}.")
+        insights.append(f"Despite high sales volume, **{top_volume_product}** is not the most profitable product, which is **{top_profit_product}**.")
 
-    insights.append(f"{top_city} leads revenue generation, contributing {top_city_share:.1%} of total sales.")
-    insights.append(f"{top_category} is the main category revenue driver.")
-    insights.append(f"{least_profitable_product} is the least profitable product and requires attention.")
-
+    insights.append(f"**{top_city}** leads revenue generation, contributing **{top_city_share:.1%}** of total sales.")
+    insights.append(f"**{top_category}** is the main category revenue driver.")
+    insights.append(f"**{least_profitable_product}** is the least profitable product and requires attention.")
     if growth > 0:
         insights.append("Sales show an upward trend over time.")
     else:
