@@ -31,7 +31,7 @@ def analyze_sales(df):
     # insight texts to print
     insights = []
 
-    insights.append(f"Total revenue is **R${total_revenue:.2f}**, generating a total profit of **R${total_profit:.2f}**.")
+    insights.append(f"Total revenue is R\\${total_revenue:.2f}, generating a total profit of R\\${total_profit:.2f}.")
     insights.append(f"**{top_revenue_product}** generates the highest revenue, accounting for **{top_revenue_share:.1%}** of total sales.")
 
     if top_revenue_product != top_profit_product:
