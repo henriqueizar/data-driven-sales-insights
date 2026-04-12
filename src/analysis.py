@@ -1,84 +1,70 @@
-import pandas as pd
-
-
-def analyze_sales(df: pd.DataFrame):
-
-    sales_by_product = (
-    df.groupby("product")["revenue"]
-    .sum()
-    .sort_values(ascending=False)
-    )
-    sales_by_city = (
-    df.groupby("city")["revenue"]
-    .sum()
-    .sort_values(ascending=False)
-    )
-    sales_by_month = (
-    df.groupby("month")["revenue"]
-    .sum()
-    .sort_values()
-    )
-    sales_by_category = (
-    df.groupby("category")["revenue"]
-    .sum()
-    .sort_values(ascending=False)
-    )
-
-    #top sales
-    top_revenue = sales_by_product.idxmax()
-    top_revenue_share = sales_by_product.max() / sales_by_product.sum()
-    #new metrics: profit and margin
-    df["profit"] = (df["unit_price"] - df["cost_per_unit"]) * df["quantity"]
-    df["margin"] = (df["unit_price"] - df["cost_per_unit"]) / df["unit_price"]
-    top_profit_product = df.groupby("product")["profit"].sum().idxmax()
-    best_margin = df.groupby("product")["margin"].mean().idxmax()
-
-    #top sales city
-    top_city = sales_by_city.idxmax()
-
-    #top sales category
-    top_category = sales_by_category.idxmax()
-
-    growth = sales_by_month.pct_change().mean()
-
-    top_city_share = sales_by_city.max() / sales_by_city.sum()
-
-
+def analyze_sales(df):
+    # main kpis
     total_revenue = df["revenue"].sum()
     total_profit = df["profit"].sum()
 
-    #volume insights
-    top_volume_product = df.groupby("product")["quantity"].sum().idxmax()
-    top_volume = df.groupby("product")["quantity"].sum().max()
+    # data for charts
+    revenue_by_product = df.groupby("product")["revenue"].sum()
+    profit_by_product = df.groupby("product")["profit"].sum()
+    revenue_by_month = df.groupby("month")["revenue"].sum()
+    revenue_by_city = df.groupby("city")["revenue"].sum()
+    quantity_by_product = df.groupby("product")["quantity"].sum()
 
-    least_profitable = df.groupby("product")["profit"].sum().idxmin()
+    # data for insights
+    top_revenue_product = revenue_by_product.idxmax()
+    top_revenue_share = revenue_by_product.max() / total_revenue
 
+    top_profit_product = profit_by_product.idxmax()
 
-    print(f"Total revenue is {total_revenue:.2f}, generating a total profit of {total_profit:.2f}.")
+    top_volume_product = quantity_by_product.idxmax()
+    top_volume = quantity_by_product.max()
 
-    print(f"{top_revenue} generates the highest revenue, accounting for {top_revenue_share:.1%} of total sales.")
+    top_city = revenue_by_city.idxmax()
+    top_city_share = revenue_by_city.max() / total_revenue
 
-    if top_revenue != top_profit_product:
-        print(f"However, {top_profit_product} is the most profitable product, indicating a gap between revenue and profitability.")
+    top_category = df.groupby("category")["revenue"].sum().idxmax()
+
+    least_profitable_product = profit_by_product.idxmin()
+
+    growth = revenue_by_month.pct_change().mean()
+
+    # insight texts to print
+    insights = []
+
+    insights.append(f"Total revenue is {total_revenue:.2f}, generating a total profit of {total_profit:.2f}.")
+    insights.append(f"{top_revenue_product} generates the highest revenue, accounting for {top_revenue_share:.1%} of total sales.")
+
+    if top_revenue_product != top_profit_product:
+        insights.append(f"However, {top_profit_product} is the most profitable product, indicating a gap between revenue and profitability.")
     else:
-        print(f"{top_revenue} is also the most profitable product.")
+        insights.append(f"{top_revenue_product} is also the most profitable product.")
 
-    print(f"{top_volume_product} is the most sold product with {top_volume} units.")
+    insights.append(f"{top_volume_product} is the most sold product with {top_volume} units.")
 
     if top_volume_product != top_profit_product:
-        print(f"Despite high sales volume, {top_volume_product} is not the most profitable product, which is {top_profit_product}")
+        insights.append(f"Despite high sales volume, {top_volume_product} is not the most profitable product, which is {top_profit_product}.")
 
-    print(f"{top_city} leads revenue generation, contributing {top_city_share:.1%} of total sales.")
-    print(f"{top_category} is the main category revenue driver.")
-
-    print(f"{least_profitable} is the least profitable product, and requires attention.")
+    insights.append(f"{top_city} leads revenue generation, contributing {top_city_share:.1%} of total sales.")
+    insights.append(f"{top_category} is the main category revenue driver.")
+    insights.append(f"{least_profitable_product} is the least profitable product and requires attention.")
 
     if growth > 0:
-        print("Sales show an upward trend over time.")
+        insights.append("Sales show an upward trend over time.")
     else:
-        print("Sales are declining or unstable over time.")
+        insights.append("Sales are declining or unstable over time.")
 
+    #better to return structured data, for organization and future escalability
     return {
-        "total_revenue": total_revenue,
-        "total_profit": total_profit
+        "kpis": {
+            "total_revenue": total_revenue,
+            "total_profit": total_profit
+        },
+        "charts": {
+            "revenue_by_product": revenue_by_product,
+            "profit_by_product": profit_by_product,
+            "revenue_by_month": revenue_by_month,
+            "revenue_by_city": revenue_by_city,
+            "quantity_by_product": quantity_by_product
+        },
+        "insights": insights
     }

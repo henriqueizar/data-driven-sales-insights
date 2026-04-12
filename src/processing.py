@@ -71,7 +71,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     #new columns for better insights
     df["revenue"] = df["quantity"] * df["unit_price"]
     df["month"] = df["date"].dt.to_period("M")
-
+    df["profit"] = (df["unit_price"] - df["cost_per_unit"]) * df["quantity"]
 
     
 
