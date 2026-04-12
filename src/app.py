@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from processing import load_data, clean_data
-import matplotlib.pyplot as plt
 from analysis import analyze_sales
 import plotly.express as px
 
