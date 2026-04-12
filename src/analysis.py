@@ -23,7 +23,7 @@ def analyze_sales(df: pd.DataFrame):
     .sum()
     .sort_values(ascending=False)
     )
-    
+
     #top sales
     top_revenue = sales_by_product.idxmax()
     top_revenue_share = sales_by_product.max() / sales_by_product.sum()
@@ -78,4 +78,7 @@ def analyze_sales(df: pd.DataFrame):
     else:
         print("Sales are declining or unstable over time.")
 
-    return ;
+    return {
+        "total_revenue": total_revenue,
+        "total_profit": total_profit
+    }
