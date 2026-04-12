@@ -1,5 +1,5 @@
 from processing import load_data, clean_data
-
+from analysis import analyze_sales
 
 def main():
     path = "data/sales.xlsx"
@@ -14,6 +14,8 @@ def main():
     df_cleaned = clean_data(df)
     print("Cleaned Data:")
     print(df_cleaned)
+
+    analyze_sales(df_cleaned)
 
 
 if __name__ == "__main__":
